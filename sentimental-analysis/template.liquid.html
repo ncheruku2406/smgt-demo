@@ -1,0 +1,60 @@
+<script src="https://assets.crowd.aws/crowd-html-elements.js"></script>
+
+<crowd-entity-annotation
+  name="crowd-entity-annotation"
+  header="Highlight parts of the text below"
+  labels="[{'label': 'shirt', 'shortDisplayName': 'shirt', 'fullDisplayName': 'shirt'}, {'label': 'pajamas', 'shortDisplayName': 'pajamas', 'fullDisplayName': 'pajamas'}, {'label': 'skirt', 'shortDisplayName': 'skirt', 'fullDisplayName': 'skirt'},{'label': 'leggings', 'shortDisplayName': 'leggings', 'fullDisplayName': 'leggings'},{'label': 'jacket', 'shortDisplayName': 'jacket', 'fullDisplayName': 'jacket'},{'label': 'jewelry', 'shortDisplayName': 'jewelry', 'fullDisplayName': 'jewelry'}, {'label': 'socks', 'shortDisplayName': 'socks', 'fullDisplayName': 'socks'}]"
+  text="{{ task.input.taskObject }}"
+>
+
+  <full-instructions header="Named entity recognition instructions">
+    <ol>
+      <li><strong>Read</strong> the text carefully.</li>
+      <li><strong>Highlight</strong> words, phrases, or sections of the text.</li>
+      <li><strong>Choose</strong> the label that best matches what you have highlighted.</li>
+      <li>To <strong>change</strong> a label, choose highlighted text and select a new label.</li>
+      <li>To <strong>remove</strong> a label from highlighted text, choose the X next to the abbreviated label name on the highlighted text.</li>
+      <li>You can select all of a previously highlighted text, but not a portion of it.</li>
+    </ol>
+  </full-instructions>
+
+  <short-instructions>
+    Apply labels to words or phrases.
+  </short-instructions>
+
+    <div id="sentiment" style="margin-top: 20px">
+      <h3>
+        What is the overall sentiment of this review?
+      </h3>
+      <crowd-radio-group>
+        <crowd-radio-button name="positive" value="positive">Positive</crowd-radio-button>
+        <crowd-radio-button name="negative" value="negative">Negative</crowd-radio-button>
+        <crowd-radio-button name="neutral" value="neutral">Neutral</crowd-radio-button>
+      </crowd-radio-group>
+    </div>
+    <div id="topic" style="margin-top: 40px">
+      <h3>
+        Which categories the reviews belong to?
+      </h3>
+      <input type="checkbox" id="mensclothing" name="category" value="mensclothing">
+      <label for="mensclothing">MensClothing</label>
+      <input type="checkbox" id="womenscloting" name="category" value="womenscloting">
+      <label for="womenscloting">Womenscloting</label>
+      <input type="checkbox" id="kidsCloting" name="category" value="kidsCloting">
+      <label for="kidsCloting">KidsCloting</label>
+      <input type="checkbox" id="generalclothing" name="category" value="generalclothing">
+      <label for="generalclothing">GeneralClothing</label>
+    </div>
+</crowd-entity-annotation>
+
+<script>
+  document.addEventListener('all-crowd-elements-ready', () => {
+    document
+      .querySelector('crowd-entity-annotation')
+      .shadowRoot
+      .querySelector('crowd-form')
+      .form
+      .appendChild(sentiment)
+      .appendChild(topic);
+  });
+</script>
