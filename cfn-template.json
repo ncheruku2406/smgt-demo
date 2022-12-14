@@ -1,0 +1,350 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "AWS CloudFormation to deploy Lambdas",
+  "Parameters": {
+    "Prefix": {
+      "Description": "smgt-demo-bucket Prefix to store your datasets and annotated output",
+      "Type": "String"
+    },
+    "CodeBucket": {
+      "Description": "code-bucket where your code and cfn templates are stored",
+      "Type": "String"
+    }
+  },
+  "Resources": {
+    "S3Bucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketName": {
+          "Fn::Join": [
+            "",
+            [
+              "smgt-demo-bucket-",
+              {
+                "Ref": "Prefix"
+              }
+            ]
+          ]
+        },
+        "AccessControl": "BucketOwnerFullControl",
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true
+        }
+      }
+    },
+    "SMGTExecutionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": {
+          "Fn::Join": [
+            "",
+            [
+              "SMGTExecutionRole-",
+              {
+                "Ref": "Prefix"
+              }
+            ]
+          ]
+        },
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "sagemaker.amazonaws.com"
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Policies" : [
+          {
+            "PolicyName": {
+              "Fn::Join": [
+                "",
+                [
+                  "SMGTExecutionPolicy-",
+                  {
+                    "Ref": "Prefix"
+                  }
+                ]
+              ]
+            },
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Action": [
+                    "s3:ListBucket"
+                  ],
+                  "Effect": "Allow",
+                  "Resource": [
+                    {
+                      "Fn::Join": [
+                        "",
+                        [
+                          "arn:aws:s3:::",
+                          {
+                            "Ref": "S3Bucket"
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "Action": [
+                    "s3:GetObject",
+                    "s3:PutObject",
+                    "s3:DeleteObject"
+                  ],
+                  "Effect": "Allow",
+                  "Resource": [
+                    {
+                      "Fn::Join": [
+                        "",
+                        [
+                          "arn:aws:s3:::",
+                          {
+                            "Ref": "S3Bucket"
+                          },
+                          "/*"
+                        ]
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/AmazonSageMakerFullAccess",
+          "arn:aws:iam::aws:policy/AmazonSageMakerGroundTruthExecution"
+        ],
+        "Path": "/"
+      }
+    },
+    "ConsolidationLambdaSMGTExecutionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": {
+          "Fn::Join": [
+            "",
+            [
+              "ConsolidationLambdaSMGTExecutionRole-",
+              {
+                "Ref": "Prefix"
+              }
+            ]
+          ]
+        },
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess",
+          "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
+        ],
+        "Path": "/"
+      }
+    },
+    "PreLabelingLambdaSMGTExecutionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": {
+          "Fn::Join": [
+            "",
+            [
+              "PreLabelingLambdaSMGTExecutionRole-",
+              {
+                "Ref": "Prefix"
+              }
+            ]
+          ]
+        },
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+          "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+        ],
+        "Path": "/"
+      }
+    },
+    "GtRecipePreHumanTaskFunctionLambda": {
+      "Type": "AWS::Lambda::Function",
+      "DependsOn": [
+        "PreLabelingLambdaSMGTExecutionRole"
+      ],
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "CodeBucket"
+          },
+          "S3Key": "coderepo/labeling_lambda.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "PreLabelingLambdaSMGTExecutionRole",
+            "Arn"
+          ]
+        },
+        "FunctionName": {
+          "Fn::Join": [
+            "",
+            [
+              "GtRecipePreHumanTaskFunctionLambda-",
+              {
+                "Ref": "Prefix"
+              }
+            ]
+          ]
+        },
+        "Timeout": 60,
+        "Handler": "sagemaker-gt-preprocess.lambda_handler",
+        "Runtime": "python3.9",
+        "MemorySize": 128
+      }
+    },
+    "GtRecipeAnnotationConsolLambda": {
+      "Type": "AWS::Lambda::Function",
+      "DependsOn": [
+        "ConsolidationLambdaSMGTExecutionRole"
+      ],
+      "Properties": {
+        "Environment" : {
+          "Variables" : {"DYNAMO_TABLE" : {"Ref": "AnnotationTable"}}
+        },
+        "Code": {
+          "S3Bucket": {
+            "Ref": "CodeBucket"
+          },
+          "S3Key": "coderepo/labeling_lambda.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "ConsolidationLambdaSMGTExecutionRole",
+            "Arn"
+          ]
+        },
+        "FunctionName": {
+          "Fn::Join": [
+            "",
+            [
+              "GtRecipeAnnotationConsolidationLambda-",
+              {
+                "Ref": "Prefix"
+              }
+            ]
+          ]
+        },
+        "Timeout": 60,
+        "Handler": "sagemaker-gt-postprocess.lambda_handler",
+        "Runtime": "python3.9",
+        "MemorySize": 128
+      }
+    },
+    "AnnotationTable":{
+      "Type" : "AWS::DynamoDB::Table",
+      "Properties" : {
+        "AttributeDefinitions" : [
+          {
+            "AttributeName" : "workerid",
+            "AttributeType" : "S"
+          }
+        ],
+        "KeySchema" : [
+          {
+            "AttributeName" : "workerid",
+            "KeyType" : "HASH"
+          }
+        ],
+        "TableName" : {
+          "Fn::Join": [
+            "",
+            [
+              "annotationdata-",
+              {
+                "Ref": "Prefix"
+              }
+            ]
+          ]
+        },
+        "ProvisionedThroughput" : {
+          "ReadCapacityUnits" : "5",
+          "WriteCapacityUnits" : "5"
+        },
+      }
+    }
+  },
+  "Outputs": {
+    "S3BucketName": {
+      "Description": "S3 bucket where annotations are stored",
+      "Value": {
+        "Ref": "S3Bucket"
+      }
+    },
+    "SagemakerExecutionRole": {
+      "Description": "SagemakerExecution IAM Role",
+      "Value": {
+        "Fn::GetAtt": [
+          "SMGTExecutionRole",
+          "Arn"
+        ]
+      }
+    },
+    "PreLabelTaskLambdaName": {
+      "Description": "PreLabelTaskLambdaName",
+      "Value": {
+        "Ref": "GtRecipePreHumanTaskFunctionLambda"
+      }
+    },
+    "PostLabelTaskLambda": {
+      "Description": "PostLabelTaskLambda",
+      "Value": {
+        "Ref": "GtRecipeAnnotationConsolLambda"
+      }
+    },
+    "DynamoDBTable": {
+      "Description": "DynamoDbTableName",
+      "Value": {
+        "Ref": "AnnotationTable"
+      }
+    }
+  }
+}
