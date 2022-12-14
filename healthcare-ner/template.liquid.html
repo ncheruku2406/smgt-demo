@@ -1,0 +1,54 @@
+<script src="https://assets.crowd.aws/crowd-html-elements.js"></script>
+
+<crowd-entity-annotation
+  name="crowd-entity-annotation"
+  header="Highlight parts of the text below"
+  labels="[{'label': 'BRCA2 mutation', 'shortDisplayName': 'BRCA2 mutation', 'fullDisplayName': 'BRCA2 mutation'}, {'label': 'Breast Cancer', 'shortDisplayName': 'Breast Cancer', 'fullDisplayName': 'Breast Cancer'}, {'label': 'one year ago', 'shortDisplayName': 'one year ago', 'fullDisplayName': 'one year ago'}]"
+  text="{{ task.input.taskObject }}"
+>
+
+  <full-instructions header="Named entity recognition instructions">
+    <ol>
+      <li><strong>Read</strong> the text carefully.</li>
+      <li><strong>Highlight</strong> words, phrases, or sections of the text.</li>
+      <li><strong>Choose</strong> the label that best matches what you have highlighted.</li>
+      <li>To <strong>change</strong> a label, choose highlighted text and select a new label.</li>
+      <li>To <strong>remove</strong> a label from highlighted text, choose the X next to the abbreviated label name on the highlighted text.</li>
+      <li>You can select all of a previously highlighted text, but not a portion of it.</li>
+    </ol>
+  </full-instructions>
+
+  <short-instructions>
+    Apply labels to words or phrases.
+  </short-instructions>
+  <div id="category" style="margin-top: 20px">
+    <h3>
+      Which categories the medical conditions belong to?
+    </h3>
+    <input type="checkbox" id="MEDICAL_CONDITION" name="category" value="MEDICAL_CONDITION">
+    <label for="MEDICAL_CONDITION">MEDICAL CONDITION</label>
+    <input type="checkbox" id="ANATOMY" name="category" value="ANATOMY">
+    <label for="ANATOMY">ANATOMY</label>
+  </div>
+    <div id="traits" style="margin-top: 20px">
+      <h3>
+        What traits associated with the medical condition?
+      </h3>
+      <input type="checkbox" id="DIAGNOSIS" name="trait" value="DIAGNOSIS">
+      <label for="DIAGNOSIS">DIAGNOSIS</label>
+      <input type="checkbox" id="BREAST_CANCER_GENE" name="category" value="BREAST_CANCER_GENE">
+      <label for="BREAST_CANCER_GENE">BREAST_CANCER_GENE</label>
+    </div>
+</crowd-entity-annotation>
+
+<script>
+  document.addEventListener('all-crowd-elements-ready', () => {
+    document
+      .querySelector('crowd-entity-annotation')
+      .shadowRoot
+      .querySelector('crowd-form')
+      .form
+      .appendChild(category)
+      .appendChild(traits);
+  });
+</script>
