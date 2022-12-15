@@ -216,7 +216,7 @@
           "S3Bucket": {
             "Ref": "CodeBucket"
           },
-          "S3Key": "coderepo/labeling_lambda.zip"
+          "S3Key": "labeling_lambda.zip"
         },
         "Role": {
           "Fn::GetAtt": [
@@ -254,7 +254,7 @@
           "S3Bucket": {
             "Ref": "CodeBucket"
           },
-          "S3Key": "coderepo/labeling_lambda.zip"
+          "S3Key": "labeling_lambda.zip"
         },
         "Role": {
           "Fn::GetAtt": [
